@@ -1,0 +1,5 @@
+<Model name="Salida">
+    <Node name="Caudal_Out" type="Double" initial="0.0" />
+    <Node name="Posicion_Valvula" type="Double" initial="0.0" />
+    <Node name="Totalizador" type="Double" initial="0.0" />
+</Model>

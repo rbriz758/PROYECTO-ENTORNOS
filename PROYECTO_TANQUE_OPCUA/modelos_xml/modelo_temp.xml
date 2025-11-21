@@ -1,0 +1,5 @@
+<Model name="Temperatura">
+    <Node name="Temperatura" type="Double" initial="20.0" />
+    <Node name="SetPoint" type="Double" initial="45.0" />
+    <Node name="Calentador_On" type="Boolean" initial="false" />
+</Model>

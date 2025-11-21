@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SCADA - Control de Tanque Industrial</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;500;700&display=swap"
+        rel="stylesheet">
+</head>
+
+<body>
+    <div class="container">
+        <!-- HEADER -->
+        <header class="header">
+            <div class="header-left">
+                <h1 class="title">
+                    <span class="icon">⚙</span>
+                    SISTEMA DE CONTROL INDUSTRIAL
+                    <span class="subtitle">Digital Twin v2.0</span>
+                </h1>
+            </div>
+            <div class="header-right">
+                <div class="modo-ingeniero">
+                    <label class="toggle-container">
+                        <input type="checkbox" id="modoIngeniero">
+                        <span class="toggle-slider"></span>
+                        <span class="toggle-label">MODO INGENIERO</span>
+                    </label>
+                </div>
+                <div id="estadoSistema" class="estado-badge">INICIALIZANDO</div>
+            </div>
+        </header>
+
+        <!-- ALERTAS -->
+        <div id="alertaFuga" class="alerta-fuga" style="display: none;">
+            <span class="alerta-icon">⚠️</span>
+            <strong>ALERTA DE FUGA DETECTADA</strong>
+            <p>Anomalía en balance de masas - Verificar sistema</p>
+        </div>
+
+        <!-- MAIN CONTENT -->
+        <div class="main-content">
+            <!-- PANEL IZQUIERDO: TANQUE Y KPIs -->
+            <div class="panel-izquierdo">
+                <!-- Visualización del Tanque -->
+                <div class="card tanque-container">
+                    <h2 class="card-title">TANQUE PRINCIPAL</h2>
+                    <div class="sensor-status-badge">
+                        <span class="sensor-label">Sensor Status:</span>
+                        <span id="val-sensor-status" class="sensor-value online">OK</span>
+                    </div>
+                    <div class="tanque-wrapper">
+                        <div class="tanque">
+                            <div id="nivelLiquido" class="nivel-liquido" style="height: 0%;">
+                                <div class="wave"></div>
+                                <div class="wave wave2"></div>
+                            </div>
+                            <div class="tanque-medidas">
+                                <span class="medida top">3000 mm</span>
+                                <span class="medida middle">1500 mm</span>
+                                <span class="medida bottom">0 mm</span>
+                            </div>
+                        </div>
+                        <div class="tanque-stats">
+                            <div class="stat">
+                                <span class="stat-label">Nivel</span>
+                                <span id="nivelDisplay" class="stat-value">0 mm</span>
+                            </div>
+                            <div class="stat">
+                                <span class="stat-label">Volumen</span>
+                                <span id="volumenDisplay" class="stat-value">0 L</span>
+                            </div>
+                            <div class="stat">
+                                <span class="stat-label">Capacidad</span>
+                                <span id="capacidadDisplay" class="stat-value">0%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- KPI: Tiempo de Llenado -->
+                <div class="card kpi-card">
+                    <h3 class="kpi-title">⏱ TIEMPO DE LLENADO</h3>
+                    <div id="tiempoLlenado" class="kpi-value">-- min</div>
+                </div>
+            </div>
+
+            <!-- PANEL CENTRAL: CONTROLES -->
+            <div class="panel-central">
+                <!-- Control de Bomba -->
+                <div class="card control-card">
+                    <h2 class="card-title">
+                        <span class="icon-pump">▲</span>
+                        ENTRADA - BOMBA
+                    </h2>
+                    <div class="control-group">
+                        <label class="control-label">RPM Bomba</label>
+                        <input type="range" id="rpmSlider" min="0" max="3000" value="0" step="50">
+                        <div class="control-display">
+                            <span id="rpmDisplay">0</span>
+                            <span class="unit">RPM</span>
+                        </div>
+                    </div>
+                    <div class="metrics-row ingenieria" style="display: none;">
+                        <div class="metric">
+                            <span class="metric-label">Caudal Entrada</span>
+                            <span id="caudalInDisplay" class="metric-value">0.0 L/min</span>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-label">Consumo Eléctrico</span>
+                            <span id="amperiosDisplay" class="metric-value">0.0 A</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Control de Válvula -->
+                <div class="card control-card">
+                    <h2 class="card-title">
+                        <span class="icon-valve">▼</span>
+                        SALIDA - VÁLVULA
+                    </h2>
+                    <div class="control-group">
+                        <label class="control-label">Apertura Válvula</label>
+                        <input type="range" id="valvulaSlider" min="0" max="100" value="0" step="5">
+                        <div class="control-display">
+                            <span id="valvulaDisplay">0</span>
+                            <span class="unit">%</span>
+                        </div>
+                    </div>
+                    <div class="metrics-row ingenieria" style="display: none;">
+                        <div class="metric">
+                            <span class="metric-label">Caudal Salida</span>
+                            <span id="caudalOutDisplay" class="metric-value">0.0 L/min</span>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-label">Totalizador</span>
+                            <span id="totalizadorDisplay" class="metric-value">0.000 m³</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Control de Temperatura -->
+                <div class="card control-card">
+                    <h2 class="card-title">
+                        <span class="icon-temp">🌡</span>
+                        TEMPERATURA
+                    </h2>
+                    <div class="control-group">
+                        <label class="control-label">Setpoint</label>
+                        <input type="range" id="setpointSlider" min="15" max="100" value="45" step="1">
+                        <div class="control-display">
+                            <span id="setpointDisplay">45</span>
+                            <span class="unit">°C</span>
+                        </div>
+                    </div>
+                    <div class="temp-status">
+                        <div class="metric">
+                            <span class="metric-label">Temperatura Actual</span>
+                            <span id="tempActualDisplay" class="metric-value temp">20.0 °C</span>
+                        </div>
+                        <div class="calentador-status">
+                            <span class="metric-label">Calentador</span>
+                            <span id="calentadorStatus" class="status-indicator off">OFF</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PANEL DERECHO: GRÁFICOS -->
+            <div class="panel-derecho">
+                <div class="card chart-card">
+                    <h2 class="card-title">📊 CAUDALES EN TIEMPO REAL</h2>
+                    <canvas id="chartCaudales"></canvas>
+                </div>
+                <div class="card chart-card">
+                    <h2 class="card-title">📈 NIVEL DEL TANQUE</h2>
+                    <canvas id="chartNivel"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- FOOTER -->
+        <footer class="footer">
+            <span>Sistema de Control Digital Twin | Motor de Física Activo</span>
+            <span id="timestamp">--</span>
+        </footer>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+
+</html>

@@ -1,0 +1,5 @@
+<Model name="Middleware">
+    <Node name="Estado_Sistema" type="String" initial="OK" />
+    <Node name="Alerta_Fuga" type="Boolean" initial="false" />
+    <Node name="Tiempo_Llenado" type="Double" initial="0.0" />
+</Model>
