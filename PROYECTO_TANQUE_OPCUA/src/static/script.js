@@ -118,8 +118,8 @@ function actualizarTanque(datos) {
     const volumen_l = datos.volumen_l || 0;
     const capacidad = (nivel_mm / 3000) * 100;
 
-    // Actualizar visualización del tanque
-    document.getElementById('nivelLiquido').style.height = capacidad + '%';
+    // Actualizar visualización del tanque 3D
+    document.getElementById('water-level-3d').style.height = capacidad + '%';
 
     // Actualizar displays
     document.getElementById('nivelDisplay').textContent = nivel_mm.toFixed(1) + ' mm';
