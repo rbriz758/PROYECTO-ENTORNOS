@@ -14,6 +14,7 @@ import logging
 import math
 import os
 import xml.etree.ElementTree as ET
+from database import DatabaseManager
 
 # Configurar logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -39,13 +40,18 @@ class PhysicsEngine:
         self.caudal_in = 0.0
         self.caudal_out = 0.0
         
-    def calcular_fisica_entrada(self, rpm_bomba):
+    def calcular_fisica_entrada(self, rpm_bomba, nivel_actual):
         """
         Física de Entrada (Bomba)
         Caudal_In = RPM * 0.05
+        Si Nivel >= MAX, Caudal_In = 0 (Físicamente imposible meter más)
         Amperios = 2.0 + (Caudal_In * 0.15)
         """
-        caudal_in = rpm_bomba * 0.05  # L/min
+        if nivel_actual >= self.NIVEL_MAX:
+            caudal_in = 0.0
+        else:
+            caudal_in = rpm_bomba * 0.05  # L/min
+            
         amperios = 2.0 + (caudal_in * 0.15)
         
         self.caudal_in = caudal_in
@@ -175,6 +181,8 @@ class PhysicsEngine:
             return "ALERTA: FUGA DETECTADA"
         elif nivel_actual >= self.NIVEL_MAX:
             return "TANQUE LLENO"
+        elif nivel_actual >= (self.NIVEL_MAX * 0.9):
+            return "ALERTA: NIVEL ALTO"
         elif nivel_actual <= 0:
             return "TANQUE VACÍO"
         else:
@@ -312,6 +320,10 @@ def main():
     # Inicializar motor de física
     physics = PhysicsEngine()
     
+    # Inicializar Base de Datos
+    db = DatabaseManager()
+    logger.info("✓ Base de Datos conectada")
+    
     logger.info("=" * 60)
     logger.info("MOTOR DE FÍSICA ACTIVO - Iniciando cálculos...")
     logger.info("=" * 60)
@@ -330,7 +342,7 @@ def main():
             # ===== CALCULAR FÍSICA =====
             
             # 1. Física de Entrada (Bomba)
-            caudal_in, amperios = physics.calcular_fisica_entrada(rpm_bomba)
+            caudal_in, amperios = physics.calcular_fisica_entrada(rpm_bomba, physics.nivel_actual)
             
             # 2. Física de Salida (Válvula + Gravedad)
             caudal_out = physics.calcular_fisica_salida(posicion_valvula, physics.nivel_actual)
@@ -394,6 +406,21 @@ def main():
             
             if alerta_fuga_val and ciclo % 5 == 0:
                 logger.warning("⚠️  ALERTA DE FUGA ACTIVA")
+            
+            # Guardar en Base de Datos cada 5 segundos (aprox)
+            if ciclo % 5 == 0:
+                # Determinar estado de temperatura
+                estado_temp = "CALENTANDO" if calentador_on else "TEMP ALCANZADA"
+                
+                db.insert_data(
+                    nivel_nuevo, 
+                    temp_nueva, 
+                    caudal_in, 
+                    caudal_out, 
+                    estado_val,
+                    calentador_on,
+                    estado_temp
+                )
             
             time.sleep(1)
             

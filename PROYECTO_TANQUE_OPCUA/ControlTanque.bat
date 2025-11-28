@@ -28,6 +28,9 @@ start "Middleware - Motor de Fisica" cmd /k "cd /d %~dp0\src && python middlewar
 timeout /t 3 /nobreak >nul
 
 start "Web SCADA" cmd /k "cd /d %~dp0\src && python web_app.py"
+timeout /t 2 /nobreak >nul
+
+start "Visor de Datos" cmd /k "cd /d %~dp0\src && python ver_datos.py"
 
 echo.
 echo ========================================
