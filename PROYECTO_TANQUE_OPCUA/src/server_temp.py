@@ -1,16 +1,52 @@
 """
 Servidor OPC UA - Sensor de Temperatura
 Puerto: 4841
-Actúa como esclavo/sensor - Los valores son escritos por el Middleware
 """
 
 from opcua import Server
 import time
 import logging
+import os
+import xml.etree.ElementTree as ET
 
 # Configurar logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+def load_xml_model(server, xml_path):
+    """Carga el modelo XML unificado"""
+    tree = ET.parse(xml_path)
+    root_xml = tree.getroot()
+    
+    uri = "http://tanque.industrial/model"
+    idx = server.register_namespace(uri)
+    
+    objects = server.get_objects_node()
+    model_name = root_xml.get("name")
+    model_obj = objects.add_object(idx, model_name)
+    
+    nodes_map = {"Objects": {}}
+    
+    for obj_xml in root_xml.findall("Object"):
+        obj_name = obj_xml.get("name")
+        opcua_obj = model_obj.add_object(idx, obj_name)
+        nodes_map["Objects"][obj_name] = {"Variables": {}}
+        
+        for node_xml in obj_xml.findall("Node"):
+            var_name = node_xml.get("name")
+            var_type = node_xml.get("type")
+            var_initial = node_xml.get("initial")
+            
+            val = 0.0
+            if var_type == "Double": val = float(var_initial)
+            elif var_type == "Boolean": val = (var_initial.lower() == "true")
+            elif var_type == "String": val = str(var_initial)
+                
+            opcua_var = opcua_obj.add_variable(idx, var_name, val)
+            opcua_var.set_writable()
+            nodes_map["Objects"][obj_name]["Variables"][var_name] = opcua_var
+            
+    return idx, nodes_map
 
 def main():
     # Crear servidor
@@ -18,30 +54,14 @@ def main():
     server.set_endpoint("opc.tcp://0.0.0.0:4841/freeopcua/server/")
     server.set_server_name("Servidor Temperatura")
     
-    # Configurar namespace
-    uri = "http://tanque.industrial/temperatura"
-    idx = server.register_namespace(uri)
-    
-    # Crear objeto raíz
-    objects = server.get_objects_node()
-    temp_obj = objects.add_object(idx, "Temperatura")
-    
-    # Crear variables WRITABLES
-    temperatura = temp_obj.add_variable(idx, "Temperatura", 20.0)
-    setpoint = temp_obj.add_variable(idx, "SetPoint", 45.0)
-    calentador_on = temp_obj.add_variable(idx, "Calentador_On", False)
-    
-    # IMPORTANTE: Hacer las variables escribibles
-    temperatura.set_writable()
-    setpoint.set_writable()
-    calentador_on.set_writable()
+    # Cargar modelo XML unificado
+    xml_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "modelos_xml", "modelo_unificado.xml")
+    idx, nodes_map = load_xml_model(server, xml_path)
     
     # Iniciar servidor
     server.start()
     logger.info("✓ Servidor Temperatura iniciado en opc.tcp://0.0.0.0:4841")
-    logger.info("  - Temperatura (Writable)")
-    logger.info("  - SetPoint (Writable)")
-    logger.info("  - Calentador_On (Writable)")
+    logger.info("  - Modelo cargado desde XML Unificado")
     
     try:
         while True:

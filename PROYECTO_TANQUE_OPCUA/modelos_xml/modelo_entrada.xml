@@ -1,5 +1,0 @@
-<Model name="Entrada">
-    <Node name="Caudal_In" type="Double" initial="0.0" />
-    <Node name="RPM_Bomba" type="Double" initial="0.0" />
-    <Node name="Amperios" type="Double" initial="0.0" />
-</Model>

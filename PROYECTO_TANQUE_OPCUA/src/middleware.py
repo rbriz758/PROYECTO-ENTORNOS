@@ -12,6 +12,8 @@ from opcua import Server, Client
 import time
 import logging
 import math
+import os
+import xml.etree.ElementTree as ET
 
 # Configurar logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -178,6 +180,41 @@ class PhysicsEngine:
         else:
             return "OPERACIÓN NORMAL"
 
+def load_xml_model(server, xml_path):
+    """Carga el modelo XML unificado"""
+    tree = ET.parse(xml_path)
+    root_xml = tree.getroot()
+    
+    uri = "http://tanque.industrial/model"
+    idx = server.register_namespace(uri)
+    
+    objects = server.get_objects_node()
+    model_name = root_xml.get("name")
+    model_obj = objects.add_object(idx, model_name)
+    
+    nodes_map = {"Objects": {}}
+    
+    for obj_xml in root_xml.findall("Object"):
+        obj_name = obj_xml.get("name")
+        opcua_obj = model_obj.add_object(idx, obj_name)
+        nodes_map["Objects"][obj_name] = {"Variables": {}}
+        
+        for node_xml in obj_xml.findall("Node"):
+            var_name = node_xml.get("name")
+            var_type = node_xml.get("type")
+            var_initial = node_xml.get("initial")
+            
+            val = 0.0
+            if var_type == "Double": val = float(var_initial)
+            elif var_type == "Boolean": val = (var_initial.lower() == "true")
+            elif var_type == "String": val = str(var_initial)
+                
+            opcua_var = opcua_obj.add_variable(idx, var_name, val)
+            opcua_var.set_writable()
+            nodes_map["Objects"][obj_name]["Variables"][var_name] = opcua_var
+            
+    return idx, nodes_map
+
 
 def main():
     # Crear servidor middleware
@@ -185,22 +222,16 @@ def main():
     server.set_endpoint("opc.tcp://0.0.0.0:4845/freeopcua/server/")
     server.set_server_name("Middleware Maestro")
     
-    # Configurar namespace
-    uri = "http://tanque.industrial/middleware"
-    idx = server.register_namespace(uri)
+    # Cargar modelo XML unificado
+    xml_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "modelos_xml", "modelo_unificado.xml")
+    idx, nodes_map = load_xml_model(server, xml_path)
     
-    # Crear objeto raíz
-    objects = server.get_objects_node()
-    middleware_obj = objects.add_object(idx, "Middleware")
-    
-    # Crear variables propias del middleware
-    estado_sistema = middleware_obj.add_variable(idx, "Estado_Sistema", "INICIALIZANDO")
-    alerta_fuga = middleware_obj.add_variable(idx, "Alerta_Fuga", False)
-    tiempo_llenado = middleware_obj.add_variable(idx, "Tiempo_Llenado", 0.0)
-    
-    estado_sistema.set_writable()
-    alerta_fuga.set_writable()
-    tiempo_llenado.set_writable()
+    # Obtener referencias a las variables propias del middleware
+    # Estructura: TanqueIndustrial -> Middleware -> Variables
+    middleware_vars = nodes_map["Objects"]["Middleware"]["Variables"]
+    estado_sistema = middleware_vars["Estado_Sistema"]
+    alerta_fuga = middleware_vars["Alerta_Fuga"]
+    tiempo_llenado = middleware_vars["Tiempo_Llenado"]
     
     # Iniciar servidor
     server.start()
@@ -216,8 +247,12 @@ def main():
         client_nivel = Client("opc.tcp://localhost:4840/freeopcua/server/")
         client_nivel.connect()
         # Navegar por el árbol de objetos
+        # Navegar por el árbol de objetos (Estructura Unificada)
+        # Root -> Objects -> TanqueIndustrial -> Nivel
         root = client_nivel.get_objects_node()
-        nivel_obj = root.get_child(["2:Nivel"])
+        tanque_obj = root.get_child(["2:TanqueIndustrial"])
+        nivel_obj = tanque_obj.get_child(["2:Nivel"])
+        
         nivel_mm_node = nivel_obj.get_child(["2:Nivel_mm"])
         volumen_l_node = nivel_obj.get_child(["2:Volumen_L"])
         logger.info("✓ Conectado a Servidor Nivel")
@@ -230,7 +265,9 @@ def main():
         client_temp = Client("opc.tcp://localhost:4841/freeopcua/server/")
         client_temp.connect()
         root = client_temp.get_objects_node()
-        temp_obj = root.get_child(["2:Temperatura"])
+        tanque_obj = root.get_child(["2:TanqueIndustrial"])
+        temp_obj = tanque_obj.get_child(["2:Temperatura"])
+        
         temperatura_node = temp_obj.get_child(["2:Temperatura"])
         setpoint_node = temp_obj.get_child(["2:SetPoint"])
         calentador_node = temp_obj.get_child(["2:Calentador_On"])
@@ -244,7 +281,9 @@ def main():
         client_entrada = Client("opc.tcp://localhost:4842/freeopcua/server/")
         client_entrada.connect()
         root = client_entrada.get_objects_node()
-        entrada_obj = root.get_child(["2:Entrada"])
+        tanque_obj = root.get_child(["2:TanqueIndustrial"])
+        entrada_obj = tanque_obj.get_child(["2:Entrada"])
+        
         caudal_in_node = entrada_obj.get_child(["2:Caudal_In"])
         rpm_bomba_node = entrada_obj.get_child(["2:RPM_Bomba"])
         amperios_node = entrada_obj.get_child(["2:Amperios"])
@@ -258,7 +297,9 @@ def main():
         client_salida = Client("opc.tcp://localhost:4843/freeopcua/server/")
         client_salida.connect()
         root = client_salida.get_objects_node()
-        salida_obj = root.get_child(["2:Salida"])
+        tanque_obj = root.get_child(["2:TanqueIndustrial"])
+        salida_obj = tanque_obj.get_child(["2:Salida"])
+        
         caudal_out_node = salida_obj.get_child(["2:Caudal_Out"])
         posicion_valvula_node = salida_obj.get_child(["2:Posicion_Valvula"])
         totalizador_node = salida_obj.get_child(["2:Totalizador"])

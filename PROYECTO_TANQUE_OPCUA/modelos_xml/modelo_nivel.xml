@@ -1,5 +1,0 @@
-<Model name="Nivel">
-    <Node name="Nivel_mm" type="Double" initial="0.0" />
-    <Node name="Volumen_L" type="Double" initial="0.0" />
-    <Node name="Estado_Sensor" type="Boolean" initial="true" />
-</Model>

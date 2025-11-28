@@ -7,10 +7,47 @@ Actúa como esclavo/sensor - Los valores son escritos por el Middleware
 from opcua import Server
 import time
 import logging
+import os
+import xml.etree.ElementTree as ET
 
 # Configurar logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+def load_xml_model(server, xml_path):
+    """Carga el modelo XML unificado"""
+    tree = ET.parse(xml_path)
+    root_xml = tree.getroot()
+    
+    uri = "http://tanque.industrial/model"
+    idx = server.register_namespace(uri)
+    
+    objects = server.get_objects_node()
+    model_name = root_xml.get("name")
+    model_obj = objects.add_object(idx, model_name)
+    
+    nodes_map = {"Objects": {}}
+    
+    for obj_xml in root_xml.findall("Object"):
+        obj_name = obj_xml.get("name")
+        opcua_obj = model_obj.add_object(idx, obj_name)
+        nodes_map["Objects"][obj_name] = {"Variables": {}}
+        
+        for node_xml in obj_xml.findall("Node"):
+            var_name = node_xml.get("name")
+            var_type = node_xml.get("type")
+            var_initial = node_xml.get("initial")
+            
+            val = 0.0
+            if var_type == "Double": val = float(var_initial)
+            elif var_type == "Boolean": val = (var_initial.lower() == "true")
+            elif var_type == "String": val = str(var_initial)
+                
+            opcua_var = opcua_obj.add_variable(idx, var_name, val)
+            opcua_var.set_writable()
+            nodes_map["Objects"][obj_name]["Variables"][var_name] = opcua_var
+            
+    return idx, nodes_map
 
 def main():
     # Crear servidor
@@ -18,30 +55,15 @@ def main():
     server.set_endpoint("opc.tcp://0.0.0.0:4840/freeopcua/server/")
     server.set_server_name("Servidor Nivel")
     
-    # Configurar namespace
-    uri = "http://tanque.industrial/nivel"
-    idx = server.register_namespace(uri)
+    # Cargar modelo XML unificado
+    xml_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "modelos_xml", "modelo_unificado.xml")
     
-    # Crear objeto raíz
-    objects = server.get_objects_node()
-    nivel_obj = objects.add_object(idx, "Nivel")
-    
-    # Crear variables WRITABLES (para que el middleware pueda escribir)
-    nivel_mm = nivel_obj.add_variable(idx, "Nivel_mm", 0.0)
-    volumen_l = nivel_obj.add_variable(idx, "Volumen_L", 0.0)
-    estado_sensor = nivel_obj.add_variable(idx, "Estado_Sensor", True)
-    
-    # IMPORTANTE: Hacer las variables escribibles
-    nivel_mm.set_writable()
-    volumen_l.set_writable()
-    estado_sensor.set_writable()
+    idx, nodes_map = load_xml_model(server, xml_path)
     
     # Iniciar servidor
     server.start()
     logger.info("✓ Servidor Nivel iniciado en opc.tcp://0.0.0.0:4840")
-    logger.info("  - Nivel_mm (Writable)")
-    logger.info("  - Volumen_L (Writable)")
-    logger.info("  - Estado_Sensor (Writable)")
+    logger.info("  - Modelo cargado desde XML Unificado")
     
     try:
         while True:
