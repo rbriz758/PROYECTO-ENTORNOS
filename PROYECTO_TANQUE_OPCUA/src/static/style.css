@@ -244,10 +244,21 @@ body {
     display: grid;
     grid-template-columns: 25% 40% 33%;
     /* Bento Grid Layout */
-    gap: 20px;
+    gap: 30px;
+    /* Aumentado de 20px */
     align-items: start;
     height: calc(100vh - 140px);
     /* Ajuste para viewport */
+}
+
+.panel-izquierdo,
+.panel-central,
+.panel-derecho {
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+    /* Separación vertical entre tarjetas */
+    height: 100%;
 }
 
 /* ===== CARDS ===== */
