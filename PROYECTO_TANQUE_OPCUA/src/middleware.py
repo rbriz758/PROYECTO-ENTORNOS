@@ -11,6 +11,8 @@ Este es el cerebro del sistema que:
 from opcua import Server, Client
 import time
 import logging
+import requests
+import threading
 import math
 import os
 import xml.etree.ElementTree as ET
@@ -19,6 +21,24 @@ from database import DatabaseManager
 # Configurar logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger("MIDDLEWARE")
+
+# CONFIGURACIÓN TELEGRAM
+TELEGRAM_TOKEN ="8320295019:AAGWkjjsodtc7XNoiAZ0N0cvAhxwughIHpU"
+
+TELEGRAM_CHAT_ID ="5636254828"
+
+def enviar_alerta_telegram(mensaje):
+    """Envía una alerta a Telegram"""
+    url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
+    try:
+        payload = {"chat_id": TELEGRAM_CHAT_ID, "text": mensaje}
+        response = requests.post(url, json=payload, timeout=5)
+        if response.status_code == 200:
+            logger.info("✓ Alerta enviada a Telegram")
+        else:
+            logger.warning(f"Error enviando a Telegram: {response.status_code} - {response.text}")
+    except Exception as e:
+        logger.error(f"Fallo al conectar con Telegram: {e}")
 
 class PhysicsEngine:
     """Motor de Física Centralizado"""
@@ -330,6 +350,7 @@ def main():
     
     # Bucle principal
     ciclo = 0
+    ultimo_envio = 0
     try:
         while True:
             ciclo += 1
@@ -373,6 +394,19 @@ def main():
             # 8. Estado del Sistema
             estado_val = physics.determinar_estado_sistema(alerta_fuga_val, physics.nivel_actual)
             
+            # ===== NOTIFICACIONES TELEGRAM =====
+            tiempo_actual = time.time()
+            if (alerta_fuga_val or estado_val == "TANQUE LLENO"):
+                if (tiempo_actual - ultimo_envio > 60):
+                    logger.info(f"Intentando enviar alerta a Telegram: {estado_val}")
+                    mensaje = f"🚨 ALERTA SCADA: {estado_val}\nNivel actual: {physics.nivel_actual:.1f} mm"
+                    # Enviar en un hilo separado para no bloquear el SCADA
+                    threading.Thread(target=enviar_alerta_telegram, args=(mensaje,)).start()
+                    ultimo_envio = tiempo_actual
+                else:
+                    # Log de debug opcional para saber que se está ignorando por spam
+                    pass
+
             # ===== ESCRIBIR RESULTADOS EN LOS SERVIDORES =====
             
             # Servidor Entrada

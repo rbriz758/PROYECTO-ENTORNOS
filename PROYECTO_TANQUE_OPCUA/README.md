@@ -1,21 +1,21 @@
-# 🏭 Sistema de Control de Tanque Industrial - Digital Twin
+# Sistema de Control de Tanque Industrial - Digital Twin
 
-## 📋 Descripción
+## Descripción
 
 **Sistema de Control Digital Twin** con arquitectura de **"Middleware Maestro"** que implementa un motor de física centralizado para garantizar coherencia total de datos y realismo físico.
 
-### ✨ Características Principales
+### Características Principales
 
-- 🎯 **Motor de Física Centralizado**: Todos los cálculos están centralizados en el middleware
-- 🔄 **Arquitectura Maestro-Esclavo**: El middleware escribe los valores calculados en los servidores
-- 📊 **Panel SCADA Web**: Interfaz dark industrial con visualización en tiempo real
-- 🔧 **Modo Ingeniero**: Toggle para mostrar/ocultar datos técnicos detallados
-- ⚠️ **Detección de Fugas**: Algoritmo inteligente que detecta anomalías en el balance de masas
-- 📈 **Gráficos en Tiempo Real**: Visualización de caudales y nivel con Chart.js
+- **Motor de Física Centralizado**: Todos los cálculos están centralizados en el middleware
+- **Arquitectura Maestro-Esclavo**: El middleware escribe los valores calculados en los servidores
+- **Panel SCADA Web**: Interfaz dark industrial con visualización en tiempo real
+- **Modo Ingeniero**: Toggle para mostrar/ocultar datos técnicos detallados
+- **Detección de Fugas**: Algoritmo inteligente que detecta anomalías en el balance de masas
+- **Gráficos en Tiempo Real**: Visualización de caudales y nivel con Chart.js
 
 ---
 
-## 🏗️ Arquitectura del Sistema
+## Arquitectura del Sistema
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -43,7 +43,7 @@
 
 ---
 
-## 📂 Estructura de Archivos
+## Estructura de Archivos
 
 ```
 PROYECTO_TANQUE_OPCUA/
@@ -77,7 +77,7 @@ PROYECTO_TANQUE_OPCUA/
 
 ---
 
-## 🔧 Instalación
+## Instalación
 
 ### 1. **Requisitos Previos**
 - Python 3.8 o superior
@@ -95,7 +95,7 @@ Las dependencias son:
 
 ---
 
-## 🚀 Ejecución
+## Ejecución
 
 ### Opción 1: Script Automático (Windows)
 
@@ -142,7 +142,7 @@ Abrir navegador en: **http://localhost:5000**
 
 ---
 
-## 🧪 Física Implementada
+## Física Implementada
 
 ### 1. **Bomba de Entrada**
 ```python
@@ -189,7 +189,7 @@ else: tiempo = (10000 - Volumen) / (Caudal_In - Caudal_Out)
 
 ---
 
-## 🎮 Uso del Panel SCADA
+## Uso del Panel SCADA
 
 ### Controles Principales
 
@@ -213,7 +213,7 @@ Active el toggle **"MODO INGENIERO"** para ver:
 
 ---
 
-## 📊 KPIs y Alertas
+## KPIs y Alertas
 
 ### Indicadores Principales
 - **Nivel**: 0 - 3000 mm
@@ -222,14 +222,14 @@ Active el toggle **"MODO INGENIERO"** para ver:
 - **Tiempo de Llenado**: Estimación dinámica
 
 ### Estados del Sistema
-- ✅ **OPERACIÓN NORMAL**: Todo funciona correctamente
-- 🟠 **TANQUE LLENO**: Nivel = 3000 mm
-- ⚪ **TANQUE VACÍO**: Nivel = 0 mm
-- 🔴 **ALERTA: FUGA DETECTADA**: Anomalía en balance de masas
+- **OPERACIÓN NORMAL**: Todo funciona correctamente
+- **TANQUE LLENO**: Nivel = 3000 mm
+- **TANQUE VACÍO**: Nivel = 0 mm
+- **ALERTA: FUGA DETECTADA**: Anomalía en balance de masas
 
 ---
 
-## 🎨 Diseño UI
+## Diseño UI
 
 **Tema**: Dark Industrial
 
@@ -252,7 +252,7 @@ Active el toggle **"MODO INGENIERO"** para ver:
 
 ---
 
-## 🔍 Puertos Utilizados
+## Puertos Utilizados
 
 | Componente | Puerto | Protocolo |
 |-----------|--------|-----------|
@@ -265,7 +265,7 @@ Active el toggle **"MODO INGENIERO"** para ver:
 
 ---
 
-## 🛠️ Troubleshooting
+## Troubleshooting
 
 ### Error: "No se pudo conectar a los servidores"
 **Solución**: Asegúrese de iniciar los 4 servidores antes del middleware
@@ -281,7 +281,7 @@ Active el toggle **"MODO INGENIERO"** para ver:
 
 ---
 
-## 📚 Conceptos Técnicos
+## Conceptos Técnicos
 
 ### ¿Qué es un Digital Twin?
 Un gemelo digital es una representación virtual de un sistema físico que se actualiza en tiempo real y permite simulación, monitoreo y control.
@@ -291,14 +291,14 @@ Un gemelo digital es una representación virtual de un sistema físico que se ac
 - **Esclavos** (Servidores): Solo exponen variables, no calculan
 
 ### Ventajas de esta Arquitectura
-✅ **Coherencia garantizada**: Imposible tener contradicciones  
-✅ **Física realista**: Todas las variables están vinculadas  
-✅ **Mantenimiento simple**: Lógica centralizada  
-✅ **Escalable**: Fácil agregar nuevos sensores  
+- **Coherencia garantizada**: Imposible tener contradicciones  
+- **Física realista**: Todas las variables están vinculadas  
+- **Mantenimiento simple**: Lógica centralizada  
+- **Escalable**: Fácil agregar nuevos sensores  
 
 ---
 
-## 👨‍💻 Desarrollo
+## Desarrollo
 
 ### Agregar un Nuevo Sensor
 
@@ -316,13 +316,13 @@ Editar la clase `PhysicsEngine` en `middleware.py`
 
 ---
 
-## 📄 Licencia
+## Licencia
 
 Este proyecto es de código abierto para fines educativos.
 
 ---
 
-## 🙏 Créditos
+## Créditos
 
 **Arquitectura**: Estrategia del Middleware Maestro  
 **Framework OPC UA**: FreeOpcUa (Python)  
@@ -331,7 +331,7 @@ Este proyecto es de código abierto para fines educativos.
 
 ---
 
-## 📞 Soporte
+## Soporte
 
 Para problemas o preguntas:
 1. Revise la sección de Troubleshooting
@@ -340,4 +340,4 @@ Para problemas o preguntas:
 
 ---
 
-**¡Disfrute de su Digital Twin con física realista! 🚀**
+**¡Disfrute de su Digital Twin con física realista!**

@@ -7,13 +7,13 @@
 
 :root {
     /* Colores Dark Industrial */
-    --bg-primary: #0a0e1a;
-    --bg-secondary: #121826;
-    --bg-card: #1a1f2e;
-    --bg-card-hover: #222838;
+    --bg-primary: #000000;
+    --bg-secondary: #1f1f1f;
+    --bg-card: #252525;
+    --bg-card-hover: #333333;
 
     /* Colores de Acento */
-    --cyan-glow: #00d9ff;
+    --cyan-glow: #ffffff;
     --cyan-dark: #00a8cc;
     --orange-alert: #ff6b35;
     --green-success: #00ff88;
@@ -25,18 +25,18 @@
     --text-dim: #5a6270;
 
     /* Bordes y Sombras */
-    --border-color: #2a3444;
-    --shadow-glow: 0 0 20px rgba(0, 217, 255, 0.3);
+    --border-color: #404040;
+    --shadow-glow: 0 0 20px rgba(255, 255, 255, 0.3);
     --shadow-card: 0 4px 15px rgba(0, 0, 0, 0.5);
 
     /* Fuentes */
-    --font-display: 'Orbitron', monospace;
-    --font-body: 'Rajdhani', sans-serif;
+    --font-display: 'Outfit', sans-serif;
+    --font-body: 'Inter', sans-serif;
 }
 
 body {
     font-family: var(--font-body);
-    background: linear-gradient(135deg, var(--bg-primary) 0%, #0d1221 100%);
+    background: linear-gradient(135deg, var(--bg-primary) 0%, #000000 100%);
     color: var(--text-primary);
     min-height: 100vh;
     overflow-x: hidden;
