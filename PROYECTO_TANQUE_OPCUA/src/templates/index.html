@@ -108,19 +108,21 @@
                     </h2>
                     <div class="control-group">
                         <label class="control-label">RPM Bomba</label>
-                        <input type="range" id="rpmSlider" min="0" max="3000" value="0" step="50">
-                        <div class="control-display">
-                            <span id="rpmDisplay">0</span>
-                            <span class="unit">RPM</span>
+                        <div class="control-row-compact">
+                            <input type="range" id="rpmSlider" min="0" max="3000" value="0" step="50" style="flex: 1;">
+                            <div class="control-display">
+                                <span id="rpmDisplay">0</span>
+                                <span class="unit">RPM</span>
+                            </div>
                         </div>
                     </div>
                     <div class="metrics-row ingenieria" style="display: none;">
                         <div class="metric">
-                            <span class="metric-label">Caudal Entrada</span>
+                            <span class="metric-label">Caudal</span>
                             <span id="caudalInDisplay" class="metric-value">0.0 L/min</span>
                         </div>
                         <div class="metric">
-                            <span class="metric-label">Consumo Eléctrico</span>
+                            <span class="metric-label">Corriente</span>
                             <span id="amperiosDisplay" class="metric-value">0.0 A</span>
                         </div>
                     </div>
@@ -133,20 +135,23 @@
                         SALIDA - VÁLVULA
                     </h2>
                     <div class="control-group">
-                        <label class="control-label">Apertura Válvula</label>
-                        <input type="range" id="valvulaSlider" min="0" max="100" value="0" step="5">
-                        <div class="control-display">
-                            <span id="valvulaDisplay">0</span>
-                            <span class="unit">%</span>
+                        <label class="control-label">Apertura</label>
+                        <div class="control-row-compact">
+                            <input type="range" id="valvulaSlider" min="0" max="100" value="0" step="5"
+                                style="flex: 1;">
+                            <div class="control-display">
+                                <span id="valvulaDisplay">0</span>
+                                <span class="unit">%</span>
+                            </div>
                         </div>
                     </div>
                     <div class="metrics-row ingenieria" style="display: none;">
                         <div class="metric">
-                            <span class="metric-label">Caudal Salida</span>
+                            <span class="metric-label">Caudal</span>
                             <span id="caudalOutDisplay" class="metric-value">0.0 L/min</span>
                         </div>
                         <div class="metric">
-                            <span class="metric-label">Totalizador</span>
+                            <span class="metric-label">Total</span>
                             <span id="totalizadorDisplay" class="metric-value">0.000 m³</span>
                         </div>
                     </div>
@@ -160,20 +165,24 @@
                     </h2>
                     <div class="control-group">
                         <label class="control-label">Setpoint</label>
-                        <input type="range" id="setpointSlider" min="15" max="100" value="45" step="1">
-                        <div class="control-display">
-                            <span id="setpointDisplay">45</span>
-                            <span class="unit">°C</span>
+                        <div class="control-row-compact">
+                            <input type="range" id="setpointSlider" min="15" max="100" value="45" step="1"
+                                style="flex: 1;">
+                            <div class="control-display">
+                                <span id="setpointDisplay">45</span>
+                                <span class="unit">°C</span>
+                            </div>
                         </div>
                     </div>
                     <div class="temp-status">
-                        <div class="metric">
-                            <span class="metric-label">Temperatura Actual</span>
-                            <span id="tempActualDisplay" class="metric-value temp">20.0 °C</span>
-                        </div>
-                        <div class="calentador-status">
-                            <span class="metric-label">Calentador</span>
-                            <span id="calentadorStatus" class="status-indicator off">OFF</span>
+                        <div class="control-row-compact" style="justify-content: space-between; width: 100%;">
+                            <div class="metric" style="flex: 1;">
+                                <span class="metric-label">Actual</span>
+                                <span id="tempActualDisplay" class="metric-value temp">20.0 °C</span>
+                            </div>
+                            <div class="calentador-status" style="padding: 10px; flex: 1; justify-content: center;">
+                                <span id="calentadorStatus" class="status-indicator off">OFF</span>
+                            </div>
                         </div>
                     </div>
                 </div>
