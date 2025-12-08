@@ -1,73 +1,75 @@
 """
-Servidor OPC UA - Sensor de Nivel
+Servidor OPC UA - Sensor de Nivel (Versión SiOME NodeSet2)
 Puerto: 4840
-Actúa como esclavo/sensor - Los valores son escritos por el Middleware
 """
 
-from opcua import Server
+from opcua import Server, ua
 import time
 import logging
 import os
-import xml.etree.ElementTree as ET
 
 # Configurar logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-def load_xml_model(server, xml_path):
-    """Carga el modelo XML unificado"""
-    tree = ET.parse(xml_path)
-    root_xml = tree.getroot()
-    
-    uri = "http://tanque.industrial/model"
-    idx = server.register_namespace(uri)
-    
-    objects = server.get_objects_node()
-    model_name = root_xml.get("name")
-    model_obj = objects.add_object(idx, model_name)
-    
-    nodes_map = {"Objects": {}}
-    
-    for obj_xml in root_xml.findall("Object"):
-        obj_name = obj_xml.get("name")
-        opcua_obj = model_obj.add_object(idx, obj_name)
-        nodes_map["Objects"][obj_name] = {"Variables": {}}
-        
-        for node_xml in obj_xml.findall("Node"):
-            var_name = node_xml.get("name")
-            var_type = node_xml.get("type")
-            var_initial = node_xml.get("initial")
-            
-            val = 0.0
-            if var_type == "Double": val = float(var_initial)
-            elif var_type == "Boolean": val = (var_initial.lower() == "true")
-            elif var_type == "String": val = str(var_initial)
-                
-            opcua_var = opcua_obj.add_variable(idx, var_name, val)
-            opcua_var.set_writable()
-            nodes_map["Objects"][obj_name]["Variables"][var_name] = opcua_var
-            
-    return idx, nodes_map
-
 def main():
-    # Crear servidor
+    # 1. Crear servidor
     server = Server()
     server.set_endpoint("opc.tcp://0.0.0.0:4840/freeopcua/server/")
     server.set_server_name("Servidor Nivel")
-    
-    # Cargar modelo XML unificado
-    xml_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "modelos_xml", "modelo_unificado.xml")
-    
-    idx, nodes_map = load_xml_model(server, xml_path)
-    
-    # Iniciar servidor
+
+    # 2. Definir ruta del XML de SiOME
+    # Asegúrate de que el archivo se llame así en tu carpeta
+    xml_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "modelos_xml", "tanque_nodeset.xml")
+
+    # 3. IMPORTAR el XML Oficial
+    if not os.path.exists(xml_path):
+        logger.error(f"No se encuentra el archivo: {xml_path}")
+        return
+
+    logger.info(f"Cargando modelo SiOME desde: {xml_path}")
+    server.import_xml(xml_path)
+
+    # 4. Obtener las variables usando los IDs de SiOME
+    # Primero buscamos qué índice le dio Python a tu namespace "http://upv.edu/TanqueIndustrial"
+    uri = "http://upv.edu/TanqueIndustrial"
+    idx = server.get_namespace_index(uri)
+    logger.info(f"Namespace '{uri}' registrado con índice: {idx}")
+
+    # Ahora "enganchamos" las variables usando los IDs que viste en SiOME (i=6016, etc.)
+    # Nota: Usamos f"ns={idx};i=XXXX" para que sea robusto
+    try:
+        # Estos IDs salen de tu captura de pantalla de SiOME
+        nivel_node = server.get_node(f"ns={idx};i=6016")        # Nivel_mm
+        volumen_node = server.get_node(f"ns={idx};i=6017")      # Volumen_L
+        sensor_node = server.get_node(f"ns={idx};i=6018")       # Estado_Sensor
+        
+        logger.info("✓ Variables de Nivel localizadas correctamente en el XML")
+        
+        # Inicializamos valores para probar
+        nivel_node.set_value(0.0)
+        volumen_node.set_value(0.0)
+        sensor_node.set_value(True)
+
+    except Exception as e:
+        logger.error(f"Error localizando variables: {e}")
+        logger.warning("Verifica que los IDs en el código coincidan con tu XML de SiOME")
+
+    # 5. Iniciar servidor
     server.start()
-    logger.info("✓ Servidor Nivel iniciado en opc.tcp://0.0.0.0:4840")
-    logger.info("  - Modelo cargado desde XML Unificado")
+    logger.info("Servidor Nivel iniciado y rodando.")
     
     try:
+        # Bucle de simulación simple (Opcional: Para que veas que se mueve)
+        count = 0.0
         while True:
             time.sleep(1)
+            # Descomenta esto si quieres que el servidor simule datos solo:
+            # count += 0.5
+            # if count > 100: count = 0
+            # nivel_node.set_value(count)
+            # volumen_node.set_value(count * 3.5)
+            
     except KeyboardInterrupt:
         logger.info("Deteniendo servidor...")
     finally:

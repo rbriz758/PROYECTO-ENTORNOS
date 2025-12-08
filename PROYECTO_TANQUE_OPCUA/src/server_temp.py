@@ -1,71 +1,63 @@
 """
-Servidor OPC UA - Sensor de Temperatura
+Servidor OPC UA - Sensor de Temperatura (Versión SiOME NodeSet2)
 Puerto: 4841
 """
 
-from opcua import Server
+from opcua import Server, ua
 import time
 import logging
 import os
-import xml.etree.ElementTree as ET
 
 # Configurar logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-def load_xml_model(server, xml_path):
-    """Carga el modelo XML unificado"""
-    tree = ET.parse(xml_path)
-    root_xml = tree.getroot()
-    
-    uri = "http://tanque.industrial/model"
-    idx = server.register_namespace(uri)
-    
-    objects = server.get_objects_node()
-    model_name = root_xml.get("name")
-    model_obj = objects.add_object(idx, model_name)
-    
-    nodes_map = {"Objects": {}}
-    
-    for obj_xml in root_xml.findall("Object"):
-        obj_name = obj_xml.get("name")
-        opcua_obj = model_obj.add_object(idx, obj_name)
-        nodes_map["Objects"][obj_name] = {"Variables": {}}
-        
-        for node_xml in obj_xml.findall("Node"):
-            var_name = node_xml.get("name")
-            var_type = node_xml.get("type")
-            var_initial = node_xml.get("initial")
-            
-            val = 0.0
-            if var_type == "Double": val = float(var_initial)
-            elif var_type == "Boolean": val = (var_initial.lower() == "true")
-            elif var_type == "String": val = str(var_initial)
-                
-            opcua_var = opcua_obj.add_variable(idx, var_name, val)
-            opcua_var.set_writable()
-            nodes_map["Objects"][obj_name]["Variables"][var_name] = opcua_var
-            
-    return idx, nodes_map
-
 def main():
-    # Crear servidor
+    # 1. Crear servidor
     server = Server()
     server.set_endpoint("opc.tcp://0.0.0.0:4841/freeopcua/server/")
     server.set_server_name("Servidor Temperatura")
-    
-    # Cargar modelo XML unificado
-    xml_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "modelos_xml", "modelo_unificado.xml")
-    idx, nodes_map = load_xml_model(server, xml_path)
-    
-    # Iniciar servidor
+
+    # 2. Definir ruta del XML de SiOME
+    xml_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "modelos_xml", "tanque_nodeset.xml")
+
+    if not os.path.exists(xml_path):
+        logger.error(f"❌ No se encuentra el archivo XML en: {xml_path}")
+        return
+
+    # 3. Importar XML
+    logger.info(f"Cargando modelo SiOME desde: {xml_path}")
+    server.import_xml(xml_path)
+
+    # 4. Obtener Namespace e IDs
+    uri = "http://upv.edu/TanqueIndustrial"
+    idx = server.get_namespace_index(uri)
+    logger.info(f"Namespace '{uri}' índice: {idx}")
+
+    try:
+        # IDs extraídos de tu XML SiOME para Temperatura
+        temp_node = server.get_node(f"ns={idx};i=6022")       # Temperatura
+        setpoint_node = server.get_node(f"ns={idx};i=6023")   # SetPoint
+        calentador_node = server.get_node(f"ns={idx};i=6024") # Calentador_On
+        
+        logger.info("✓ Variables de Temperatura localizadas.")
+        
+        # Inicializar valores
+        temp_node.set_value(20.0)
+        setpoint_node.set_value(45.0)
+        calentador_node.set_value(False)
+
+    except Exception as e:
+        logger.error(f"Error enganchando variables: {e}")
+
+    # 5. Iniciar servidor
     server.start()
-    logger.info("✓ Servidor Temperatura iniciado en opc.tcp://0.0.0.0:4841")
-    logger.info("  - Modelo cargado desde XML Unificado")
+    logger.info("Servidor Temperatura corriendo en puerto 4841")
     
     try:
         while True:
             time.sleep(1)
+            # Aquí podrías simular cambios de temperatura si quisieras
     except KeyboardInterrupt:
         logger.info("Deteniendo servidor...")
     finally:

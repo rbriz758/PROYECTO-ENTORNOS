@@ -1,67 +1,52 @@
 """
-Servidor OPC UA - Sensor de Entrada (Bomba)
+Servidor OPC UA - Sensor de Entrada (Versión SiOME NodeSet2)
 Puerto: 4842
 """
 
-from opcua import Server
+from opcua import Server, ua
 import time
 import logging
 import os
-import xml.etree.ElementTree as ET
 
-# Configurar logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-def load_xml_model(server, xml_path):
-    """Carga el modelo XML unificado"""
-    tree = ET.parse(xml_path)
-    root_xml = tree.getroot()
-    
-    uri = "http://tanque.industrial/model"
-    idx = server.register_namespace(uri)
-    
-    objects = server.get_objects_node()
-    model_name = root_xml.get("name")
-    model_obj = objects.add_object(idx, model_name)
-    
-    nodes_map = {"Objects": {}}
-    
-    for obj_xml in root_xml.findall("Object"):
-        obj_name = obj_xml.get("name")
-        opcua_obj = model_obj.add_object(idx, obj_name)
-        nodes_map["Objects"][obj_name] = {"Variables": {}}
-        
-        for node_xml in obj_xml.findall("Node"):
-            var_name = node_xml.get("name")
-            var_type = node_xml.get("type")
-            var_initial = node_xml.get("initial")
-            
-            val = 0.0
-            if var_type == "Double": val = float(var_initial)
-            elif var_type == "Boolean": val = (var_initial.lower() == "true")
-            elif var_type == "String": val = str(var_initial)
-                
-            opcua_var = opcua_obj.add_variable(idx, var_name, val)
-            opcua_var.set_writable()
-            nodes_map["Objects"][obj_name]["Variables"][var_name] = opcua_var
-            
-    return idx, nodes_map
-
 def main():
-    # Crear servidor
     server = Server()
     server.set_endpoint("opc.tcp://0.0.0.0:4842/freeopcua/server/")
     server.set_server_name("Servidor Entrada")
-    
-    # Cargar modelo XML unificado
-    xml_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "modelos_xml", "modelo_unificado.xml")
-    idx, nodes_map = load_xml_model(server, xml_path)
-    
-    # Iniciar servidor
+
+    # Ruta al XML SiOME
+    xml_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "modelos_xml", "tanque_nodeset.xml")
+
+    if not os.path.exists(xml_path):
+        logger.error(f"❌ No se encuentra el archivo XML en: {xml_path}")
+        return
+
+    logger.info("Cargando modelo SiOME...")
+    server.import_xml(xml_path)
+
+    uri = "http://upv.edu/TanqueIndustrial"
+    idx = server.get_namespace_index(uri)
+
+    try:
+        # IDs extraídos de tu XML SiOME para Entrada
+        caudal_in_node = server.get_node(f"ns={idx};i=6009") # Caudal_In
+        rpm_node = server.get_node(f"ns={idx};i=6010")       # RPM_Bomba
+        amps_node = server.get_node(f"ns={idx};i=6011")      # Amperios
+        
+        logger.info("✓ Variables de Entrada localizadas.")
+        
+        # Inicializar
+        caudal_in_node.set_value(0.0)
+        rpm_node.set_value(0.0)
+        amps_node.set_value(0.0)
+
+    except Exception as e:
+        logger.error(f"Error enganchando variables: {e}")
+
     server.start()
-    logger.info("✓ Servidor Entrada iniciado en opc.tcp://0.0.0.0:4842")
-    logger.info("  - Modelo cargado desde XML Unificado")
+    logger.info("Servidor Entrada corriendo en puerto 4842")
     
     try:
         while True:
@@ -70,7 +55,6 @@ def main():
         logger.info("Deteniendo servidor...")
     finally:
         server.stop()
-        logger.info("Servidor detenido")
 
 if __name__ == "__main__":
     main()
